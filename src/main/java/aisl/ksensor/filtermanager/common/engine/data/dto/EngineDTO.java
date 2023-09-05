@@ -23,6 +23,7 @@ public class EngineDTO {
     private String adminName;
     private String adminPassword;
     private Integer environmentID;
+    private String sensorType;
 //    private Long optimizationId; //    late_lately set
     private String createBy;
 }

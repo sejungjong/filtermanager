@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -26,6 +27,11 @@ public class FilterDAOImpl implements FilterDAO {
     @Override
     public Optional<Filter> findFilterByFilterType(String type) {
         return filterRepository.findByFilterType(type);
+    }
+
+    @Override
+    public List<Filter> findAllFilters() {
+        return filterRepository.findAll();
     }
 
     @Override

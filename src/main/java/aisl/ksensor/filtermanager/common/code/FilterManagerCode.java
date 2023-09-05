@@ -13,8 +13,8 @@ public class FilterManagerCode {
         @JsonProperty("filter_engine")
         ENGINE("filter_engine"),
 
-        @JsonProperty(":/service_zone/filter")
-        ENGINE_MOUNT_DIRECTORY(":/service_zone/filter");
+        @JsonProperty(":/serviceZoneFilter")
+        ENGINE_MOUNT_DIRECTORY(":/serviceZoneFilter");
 
         private String code;
 
@@ -39,6 +39,9 @@ public class FilterManagerCode {
     }
 
     public static enum ServiceZoneCode {
+
+        @JsonProperty("isp_filter_engine:v1")
+        ENGINE_IMAGE_NAME("isp_filter_engine:v1"),
         @JsonProperty("/api/auth")
         SERVICE_ZONE_AUTH_ENDPOINT("/api/auth"),
 
@@ -54,14 +57,17 @@ public class FilterManagerCode {
         @JsonProperty("/api/endpoints/4/docker/containers/%s/json")
         SERVICE_ZONE_CONFIRM_IMAGE_ENDPOINT("/api/endpoints/4/docker/images/%s/json"),
 
-        @JsonProperty("optimization_engine")
-        SERVICE_ZONE_OPTIMIZATION_ENGINE("optimization_engine"),
+        @JsonProperty("ml-engine")
+        ML_ENGINE("ml-engine"),
 
-        @JsonProperty("ml_engine")
-        SERVICE_ZONE_ML_ENGINE("ml_engine"),
+        @JsonProperty("optimization-engine")
+        OPTIMIZATION_ENGINE("optimization-engine"),
 
-        @JsonProperty("filter_engine")
-        SERVICE_ZONE_FILTER_ENGINE("filter_engine"),
+        @JsonProperty("filter-engine")
+        FILTER_ENGINE("filter-engine"),
+
+        @JsonProperty("sensor-controller")
+        SENSOR_CONTROLLER("sensor-controller"),
 
         @JsonProperty("9101/tcp")
         SERVICE_ZONE_OPTIMIZATIONENGINE_PORT("9101/tcp"),

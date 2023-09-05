@@ -8,6 +8,7 @@ import java.util.Map;
 public class EngineConfigDTO {
     private String name;
     private String image;
+    private List<String> Env;
     private NetworkingConfig networkingConfig;
     private Map<String, Object> exposedPorts;
     private HostConfig hostConfig;

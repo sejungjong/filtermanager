@@ -1,6 +1,7 @@
 package aisl.ksensor.filtermanager.filtering.service.impl;
 
 import aisl.ksensor.filtermanager.common.code.FilterManagerCode.ServiceZoneCode;
+import aisl.ksensor.filtermanager.common.dto.ParameterRange;
 import aisl.ksensor.filtermanager.common.engine.data.dao.EngineDAO;
 import aisl.ksensor.filtermanager.common.engine.service.EngineService;
 import aisl.ksensor.filtermanager.filtering.data.dao.FilterDAO;
@@ -17,10 +18,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -50,19 +48,21 @@ public class FilteringServiceImpl implements FilteringService {
         List<String> filterTypeList = new ArrayList<>();
         List<String> filterStoragePathList = new ArrayList<>();
 
-//        for (String filterType : propagationSetupRequestDTO.getFilterParam().keySet()) {
-//            System.out.println("Filter Type: " + filterType);
-////            System.out.println("Filter Param: " + propagationSetupRequestDTO.getFilterParam().get(filterType));
-//            Optional<Filter> filter = filterDAO.findFilterByFilterType(filterType);
-//            if (filter.isEmpty()) {
-//                throw new NoSuchElementException(filterType + "Filter is not exist");
-//            }
-//            filterStoragePathList.add(filter.get().getFilterStoragePath());
-//        }
+        for (Object filterType : propagationSetupRequestDTO.getFilterParam().keySet()) {
+            String filterTypeString = (String) filterType;
+            System.out.println("Filter Type: " + filterTypeString);
+//            System.out.println("Filter Param: " + propagationSetupRequestDTO.getFilterParam().get(filterType));
+            Optional<Filter> filter = filterDAO.findFilterByFilterType(filterTypeString);
+            if (filter.isEmpty()) {
+                throw new NoSuchElementException(filterType + "Filter is not exist");
+            }
+            filterStoragePathList.add(filter.get().getFilterStoragePath());
+        }
 
         System.out.println("ServiceId " + propagationSetupRequestDTO.getServiceId());
-        engineService.setupEngine(propagationSetupRequestDTO.getServiceId(), "nginx",
-                filterStoragePathList, ServiceZoneCode.SERVICE_ZONE_FILTER_ENGINE.getCode()).flatMap(engineDTO -> {
+        engineService.setupEngine(propagationSetupRequestDTO.getServiceId(), ServiceZoneCode.ENGINE_IMAGE_NAME.getCode(),
+                filterStoragePathList, ServiceZoneCode.FILTER_ENGINE.getCode(),
+                propagationSetupRequestDTO.getSensorType()).flatMap(engineDTO -> {
                     System.out.println("EngineDTO: " + engineDTO);
                     return Mono.just(engineDTO);
 //            ParameterEntity parameterEntity = new ParameterEntity(propagationSetupRequestDTO);
@@ -100,27 +100,68 @@ public class FilteringServiceImpl implements FilteringService {
 //        optimization.setCreateBy(optimizationDTO.getCreateBy());
 
 
-    public void registFilter(String filterType, String storagePath, String insertedBy) {
+    public <T> void registFilter(String filterType, Map<String, Map<String, ParameterRange<T>>> filterParam, String storagePath, String insertedBy) {
 
-//        FilterDTO filterDTO = new FilterDTO();
-//        filterDTO.setFilterType(filterType);
-//        filterDTO.setFilterStoragePath(storagePath);
-//        filterDTO.setCreateBy(insertedBy);
-        System.out.println("Filter Type: " + filterType);
-        System.out.println("Filter Storage Path: " + storagePath);
-        System.out.println("Inserted By: " + insertedBy);
+        FilterDTO filterDTO = new FilterDTO();
+        filterDTO.setFilterType(filterType);
+        filterDTO.setFilterParam(filterParam);
+        filterDTO.setFilterStoragePath(storagePath);
+        filterDTO.setCreateBy(insertedBy);
+//        System.out.println("Filter Type: " + filterType);
+//        System.out.println("Filter Param: " + filterType);
+//        System.out.println("Filter Storage Path: " + storagePath);
+//        System.out.println("Inserted By: " + insertedBy);
 
 
         Filter filter = new Filter();
-        filter.setFilterType(filterType);
-        filter.setFilterStoragePath(storagePath);
-        filter.setCreateBy(insertedBy);
+        filter.setFilterType(filterDTO.getFilterType());
+        filter.setFilterParam(filterDTO.getFilterParam());
+        filter.setFilterStoragePath(filterDTO.getFilterStoragePath());
+        filter.setCreateBy(filterDTO.getCreateBy());
         System.out.println("filter is :" + filter);
         filterDAO.insertFilter(filter);
     }
 
-    public String provisioningServiceEngine(String serviceId) {
-        return "hi";
+    public List<FilterDTO> getFilters() {
+
+        List<FilterDTO> filterDTOList = new ArrayList<>();
+
+        List<Filter> filterList =
+                filterDAO.findAllFilters();
+        for (Filter filter : filterList) {
+            FilterDTO<Object> filterDTO = new FilterDTO<>();
+            filterDTO.setFilterType(filter.getFilterType());
+
+            // optimizationParam 변환 로직
+            Map<String, Object> originalParams = filter.getFilterParam();
+
+            Map<String, ParameterRange<Object>> innerMap = new HashMap<>();
+
+            for (Map.Entry<String, Object> entry : originalParams.entrySet()) {
+                {
+                    if (entry.getValue() instanceof Map) {
+                        Map<String, Object> paramMap = (Map<String, Object>) entry.getValue();
+
+                        ParameterRange<Object> parameterRange = new ParameterRange<>();
+                        parameterRange.setType((String) paramMap.get("type"));
+                        parameterRange.setStart((Object) paramMap.get("start"));
+                        parameterRange.setEnd((Object) paramMap.get("end"));
+                        parameterRange.setOptions((List<String>) paramMap.get("options"));
+
+                        innerMap.put(entry.getKey(), parameterRange);
+                    }
+
+
+                }
+                filterDTO.setFilterParam(innerMap);
+                filterDTO.setFilterStoragePath(filter.getFilterStoragePath());
+                filterDTO.setCreateBy(filter.getCreateBy());
+
+                filterDTOList.add(filterDTO);
+            }
+
+        }
+        return filterDTOList;
     }
 
     public void deleteService(Long serviceId) {

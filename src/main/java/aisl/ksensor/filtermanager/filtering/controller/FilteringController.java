@@ -8,10 +8,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @Slf4j
@@ -63,7 +62,7 @@ public class FilteringController {
      * @param requestBody run optimization data
      * @throws Exception run error
      */
-    @PostMapping("/ml/run")
+    @PostMapping("/filter/run")
     public @ResponseBody void runOptimization(HttpServletRequest request,
                                               HttpServletResponse response,
                                               @RequestBody String requestBody) throws Exception {
@@ -81,13 +80,19 @@ public class FilteringController {
     @PostMapping("/filter/regist")
     public @ResponseBody void registOptimizationAlgorithm(HttpServletRequest request,
                                                           HttpServletResponse response,
-                                                          @RequestBody FilterDTO mlModelDTO) throws Exception {
+                                                          @RequestBody FilterDTO filterDTO) throws Exception {
 
 
-        mlService.registFilter(mlModelDTO.getFilterType(),
-                mlModelDTO.getFilterStoragePath(),
-                mlModelDTO.getCreateBy());
+        mlService.registFilter(filterDTO.getFilterType(),
+                filterDTO.getFilterParam(),
+                filterDTO.getFilterStoragePath(),
+                filterDTO.getCreateBy());
 
 
+    }
+
+    @GetMapping("/filters")
+    public @ResponseBody List<FilterDTO> getMlModels() {
+        return mlService.getFilters();
     }
 }

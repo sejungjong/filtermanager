@@ -45,8 +45,8 @@ public class EngineServiceImpl implements EngineService {
     private final EngineExceptionHandler engineExceptionHandler = new EngineExceptionHandler();
 
 
-    public Mono<EngineDTO> setupEngine(String modelName, String type,
-                                       List<String> volumePath, String engineType) throws MalformedURLException, JsonProcessingException {
+    public Mono<EngineDTO> setupEngine(String modelName, String imageName,
+                                       List<String> volumePath, String engineType, String sensorType) throws MalformedURLException, JsonProcessingException {
         log.info("setupEngine");
 
 
@@ -60,10 +60,11 @@ public class EngineServiceImpl implements EngineService {
         engineDTO.setOpenPort(ServiceZoneCode.SERVICE_ZONE_OPTIMIZATIONENGINE_PORT.getCode());
         engineDTO.setAllocatedCpuCores(ServiceZoneCode.SERVICE_ZONE_ENGINE_CPU_CORE.getCode());
         engineDTO.setAllocatedMemory(ServiceZoneCode.SERVICE_ZONE_ENGINE_RAM_MEMORY.getLongValue());
+        engineDTO.setSensorType(sensorType);
 
         System.out.println("engineType: " + engineType);
 
-        if (engineType.equals(ServiceZoneCode.SERVICE_ZONE_ML_ENGINE.getCode())) {
+        if (engineType.equals(ServiceZoneCode.ML_ENGINE.getCode())) {
 //            Todo.. set the ml engine gpu dynamically
             engineDTO.setAllocatedGpuCounts(ServiceZoneCode.SERVICE_ZONE_MLENGINE_GPU_COUNT.getIntValue());
             engineDTO.setAllocatedGpuMemory(ServiceZoneCode.SERVICE_ZONE_MLENGINE_GPU_MEMORY.getCode());
@@ -85,10 +86,10 @@ public class EngineServiceImpl implements EngineService {
                 .flatMap(jwt -> engineExceptionHandler.handleAuthEngineError(jwt)
                         .flatMap(authJwt -> {
                             engineDTO.setAccessToken(authJwt);
-                            return confirmImage(jwt, type)
+                            return confirmImage(jwt, imageName)
                                     .flatMap(engine -> engineExceptionHandler.handleConfirmImageError(engine)
                                             .flatMap(confirmEngine -> {
-                                                    engineDTO.setImageId(type);
+                                                    engineDTO.setImageId(imageName);
                                                 try {
                                                     return createEngine(jwt, engineDTO, volumePath, engineType)
                                                             .flatMap(createdEngine -> engineExceptionHandler.handleCreateEngineError(createdEngine)
@@ -212,6 +213,11 @@ public class EngineServiceImpl implements EngineService {
 
         engineConfigDTO.setImage(engineDTO.getImageId());
 
+        List<String> envList = new ArrayList<>();
+        envList.add("SERVICE_ID=" + engineDTO.getEngineContainerName());
+        envList.add("SENSOR_TYPE=" + engineDTO.getSensorType());
+        engineConfigDTO.setEnv(envList);
+
 
         NetworkingConfig networkingConfig = new NetworkingConfig();
         HashMap<String, Object> endpointsConfigMap = new HashMap<>();
@@ -225,11 +231,11 @@ public class EngineServiceImpl implements EngineService {
 
         HostConfig hostConfig = new HostConfig();
 
-        List<String> updatedVolumePath = volumePath.stream()
-                .map(str -> str + ServiceCommonCode.ENGINE_MOUNT_DIRECTORY.getCode()).toList();
-
-        System.out.println("volumeMounted path is " + updatedVolumePath);
-        hostConfig.setBinds(updatedVolumePath);
+//        List<String> updatedVolumePath = volumePath.stream()
+//                .map(str -> str + ServiceCommonCode.ENGINE_MOUNT_DIRECTORY.getCode()).toList();
+//
+//        System.out.println("volumeMounted path is " + updatedVolumePath);
+//        hostConfig.setBinds(updatedVolumePath);
 
         HashMap<String, List<Object>> portBindingsMap = new HashMap<>();
         portBindingsMap.put(ServiceZoneCode.SERVICE_ZONE_OPTIMIZATIONENGINE_PORT.getCode(), Collections.emptyList());

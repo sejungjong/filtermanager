@@ -40,8 +40,8 @@ public class FilterManagerCode {
 
     public static enum ServiceZoneCode {
 
-        @JsonProperty("isp_filter_engine:v1")
-        ENGINE_IMAGE_NAME("isp_filter_engine:v1"),
+        @JsonProperty("isp_filter_engine:v2")
+        ENGINE_IMAGE_NAME("isp_filter_engine:v2"),
         @JsonProperty("/api/auth")
         SERVICE_ZONE_AUTH_ENDPOINT("/api/auth"),
 
